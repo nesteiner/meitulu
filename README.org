@@ -1,0 +1,25 @@
+#+title: 美图录爬虫
+* 介绍
+前面写的好几个爬虫都因为网站的原因没法使用了，还好这还有一个 美图录 网站可以使用，就用他来爬下涩图吧
+* 用法
+** 指定存贮位置
+首先指定图片下载位置，在 =/meitulu/settings.py= 中设置 =FILES_STORE= 路径
+#+begin_src python
+  FILES_STORE = '/home/steiner/workspace/meitulu/capture/'
+#+end_src
+** 指定网站位置
+然后，我们要找到一个模特的首页，比如
+
+#+DOWNLOADED: screenshot @ 2022-04-10 13:31:41
+[[file:./doc/2022-04-10_13-31-41_screenshot.png]]
+点击 *模特* 那一选项，点击进入，然后复制他的链接，如
+
+#+DOWNLOADED: screenshot @ 2022-04-10 13:36:29
+[[file:./doc/2022-04-10_13-36-29_screenshot.png]]
+
+** 输入命令
+复制搜索框的网址，在命令行下输入
+#+begin_src bash
+  scrapy crawl evelyn -a albumUrl='http://meitulu.cn/t/Evelynaili/'
+#+end_src
+接下来等他下载完成即可
