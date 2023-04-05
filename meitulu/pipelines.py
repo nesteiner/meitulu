@@ -24,13 +24,12 @@ class MeituluPipeline(FilesPipeline):
         'Accept': 'image/avif,image/webp,*/*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
-        'Host': 'image.meitulu.cn',
-        'Referer': 'http://meitulu.cn/',
+        'Referer': 'http://meitulu.me/',
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0'
     }
     
     def file_path(self, request, response=None, info=None, *, item=None):
-        dirname = item['albumName']
+        dirname = item['album_name']
         basename = item['name']
         
         return os.path.join(dirname, basename)
@@ -38,5 +37,5 @@ class MeituluPipeline(FilesPipeline):
     def get_media_requests(self, item, info):
         yield scrapy.Request(item['url'], headers=self.default_headers)
 
-    def item_completed(sefl, results, item, info):
+    def item_completed(self, results, item, info):
         return item

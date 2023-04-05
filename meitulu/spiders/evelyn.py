@@ -1,41 +1,52 @@
 import scrapy
 from meitulu.items import Image
-
+import re
 class Spider(scrapy.Spider):
     name = 'evelyn'
-    # start_urls = ['http://meitulu.cn/t/Evelynaili/']
-
-    def __init__(self, albumUrl=None, *args, **kwargs):
-        if albumUrl == None:
+    def __init__(self, album_url=None, *args, **kwargs):
+        if album_url == None:
             raise Exception('usage: -a albumUrl=...')
 
         super(Spider, self).__init__(*args, **kwargs)
-        self.start_url = albumUrl
+        self.start_url = album_url
 
     def start_requests(self):
         yield scrapy.Request(url=self.start_url, callback=self.parse)
 
-    def parse(self, response):
-        urls = response.css('div.main div.boxs ul.img li>a::attr(href)').extract()
-        albumUrls = list(map(lambda url: response.urljoin(url), urls))
-        names = response.css('div.main div.boxs ul.img li p.p_title> a::text').extract()
+    def parse(self, response, **kwargs):
+        # urls = response.css('div.main div.boxs ul.img li>a::attr(href)').extract()
+        # albumUrls = list(map(lambda url: response.urljoin(url), urls))
+        # names = response.css('div.main div.boxs ul.img li p.p_title> a::text').extract()
 
-        for (albumUrl, name) in zip(albumUrls, names):
+        urls = response.css("div.my-gutters-b div a::attr(href)").extract()
+        album_urls = list(map(lambda url: response.urljoin(url), urls))
+        names = response.css("div.my-gutters-b div a div.my-card-title::text").extract()
+
+        for (album_url, name) in zip(album_urls, names):
             yield scrapy.Request(
-                url=albumUrl,
-                callback=self.parseAlbum,
-                cb_kwargs=dict(firstUrl=albumUrl, albumName=name, count=1))
+                url=album_url,
+                callback=self.parse_album,
+                cb_kwargs=dict(album_name=name, count=1))
 
-    def parseAlbum(self, response, firstUrl, albumName, count):
-        url = response.css('div.content center a img.content_img::attr(src)').extract_first()
-        name = str(count) + '.jpg'
-        
-        yield Image(url=url, name=name, albumName=albumName, fromUrl=response.url)
+    def parse_album(self, response, album_name, count):
+        urls = response.css("div.container-inner-fix-m img::attr(src)").extract()
+        image_urls = list(map(lambda url: response.urljoin(url), urls))
 
-        nextPage = response.urljoin(response.css('div.content center a::attr(href)').extract_first())
-        if nextPage != firstUrl:
+        for url in image_urls:
+            name = str(count) + ".jpg"
+            yield Image(url=url, name=name, album_name=album_name, from_url=response.url)
+            count += 1
+
+        anchors = response.css("div.container ul.pagination li a.page-link").extract()
+        pages = response.css("div.container ul.pagination li a.page-link::attr(href)").extract()
+
+        next_page_anchor = anchors[-1]
+        pattern = re.compile(r"href")
+
+        if re.search(pattern, next_page_anchor) != None:
+            next_page = response.urljoin(pages[-1])
             yield scrapy.Request(
-                url=nextPage,
-                callback=self.parseAlbum,
-                cb_kwargs=dict(firstUrl=nextPage, albumName=albumName, count=count+1))
+                url=next_page,
+                callback=self.parse_album,
+                cb_kwargs=dict(album_name=album_name, count=count+1))
         
